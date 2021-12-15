@@ -9,7 +9,8 @@
   returns the file descriptor for the upstream pipe.
   =========================*/
 int server_handshake(int *to_client) {
-
+    printf("Welcome to Server Client System\n");
+    printf("Use \"exit\" to end proccess\n");
     int sToCerr = mkfifo(WKP, 0644);
     if (sToCerr == -1){
         printf("Error: %s\n", strerror(errno));
@@ -59,11 +60,12 @@ int server_handshake(int *to_client) {
     }
     while(1){
       char line[STRINGSIZE];
-      if(!strcmp(line, "exit")){
-        exit(0);
-      }
       from_client = open(WKP, O_RDONLY);
       read(from_client, line, STRINGSIZE);
+      if(!strncmp(line, "exit", 4)){
+          remove(WKP);
+          exit(0);
+        }
       close(from_client);
       int i;
       for(i = 0; i < strlen(line); i++){
@@ -73,7 +75,7 @@ int server_handshake(int *to_client) {
       write(*to_client, line, STRINGSIZE);
       close(*to_client);
     }
-    remove(WKP);
+
     remove(pipename);
     return from_client;
 }
@@ -126,12 +128,15 @@ int client_handshake(int *to_server) {
       fgets(line, STRINGSIZE, stdin);
       *to_server = open(WKP, O_WRONLY);
       int hoo = write(*to_server, line, STRINGSIZE);
-      exit(0);
+
       if (hoo == -1){
           printf("Error: %s\n", strerror(errno));
           return 0;
       }
       close(*to_server);
+      if(!strncmp(line, "exit", 4)){
+        exit(0);
+      }
       open(pidp, O_RDONLY);
       goo = read(from_server, line, STRINGSIZE);
       close(from_server);
